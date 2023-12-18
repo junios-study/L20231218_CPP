@@ -8,6 +8,7 @@
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/FloatingPawnMovement.h"
+#include "Kismet/GameplayStatics.h"
 
 
 // Sets default values
@@ -28,6 +29,41 @@ AMyPawn::AMyPawn()
 	Right = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Right"));
 	Right->SetupAttachment(Body);
 
+	Arrow = CreateDefaultSubobject<UArrowComponent>(TEXT("Arrow"));
+	Arrow->SetupAttachment(Box);
+
+	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
+	SpringArm->SetupAttachment(Box);
+
+	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
+	Camera->SetupAttachment(SpringArm);
+
+	Movement = CreateDefaultSubobject<UFloatingPawnMovement>(TEXT("Movement"));
+
+	//잘 쓰지 않음
+	//Data<자료형> SM_Body(에셋경로)
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Body(TEXT("/Script/Engine.StaticMesh'/Game/P38/Meshes/SM_P38_Body.SM_P38_Body'"));
+	if (SM_Body.Succeeded())
+	{
+		Body->SetStaticMesh(SM_Body.Object);
+	}
+
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Propeller(TEXT("/Script/Engine.StaticMesh'/Game/P38/Meshes/SM_P38_Propeller.SM_P38_Propeller'"));
+	if (SM_Propeller.Succeeded())
+	{
+		Left->SetStaticMesh(SM_Propeller.Object);
+		Right->SetStaticMesh(SM_Propeller.Object);
+	}
+
+	Left->AddLocalOffset(FVector(37.0f, -21.0f, 0.0f));
+	Right->AddLocalOffset(FVector(37.0f, 21.0f, 0.0f));
+
+	Arrow->AddLocalOffset(FVector(100.0f, 0,  0.0f));
+
+	SpringArm->TargetArmLength = 150.0f;
+	SpringArm->bEnableCameraLag = true;
+	SpringArm->bEnableCameraRotationLag = true;
+
 }
 
 // Called when the game starts or when spawned
@@ -42,6 +78,11 @@ void AMyPawn::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	AddMovementInput(GetActorForwardVector());
+
+	float WorldDeltaSeconds = UGameplayStatics::GetWorldDeltaSeconds(GetWorld());
+	Left->AddLocalRotation(FRotator(0, 0, 1800.0f * WorldDeltaSeconds));
+	Right->AddLocalRotation(FRotator(0, 0, 1800.0f * WorldDeltaSeconds));
 }
 
 // Called to bind functionality to input
