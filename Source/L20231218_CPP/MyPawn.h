@@ -59,6 +59,14 @@ public:
 	TObjectPtr<UCameraComponent> Camera ;
 
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Components")
-	USpringArmComponent* SpringArm;
+	TObjectPtr<USpringArmComponent> SpringArm;
 
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Components")
+	TObjectPtr<class UMyActorComponent> RotateComponent;
+
+	void Fire();
+
+	void Pitch(float Value);
+
+	void Roll(float Value);
 };

@@ -9,6 +9,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/FloatingPawnMovement.h"
 #include "Kismet/GameplayStatics.h"
+#include "MyActorComponent.h"
 
 
 // Sets default values
@@ -40,6 +41,9 @@ AMyPawn::AMyPawn()
 
 	Movement = CreateDefaultSubobject<UFloatingPawnMovement>(TEXT("Movement"));
 
+	RotateComponent = CreateDefaultSubobject<UMyActorComponent>(TEXT("Rotator"));
+
+
 	//잘 쓰지 않음
 	//Data<자료형> SM_Body(에셋경로)
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Body(TEXT("/Script/Engine.StaticMesh'/Game/P38/Meshes/SM_P38_Body.SM_P38_Body'"));
@@ -70,7 +74,10 @@ AMyPawn::AMyPawn()
 void AMyPawn::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	RotateComponent->Components.Add(Left);
+	RotateComponent->Components.Add(Right);
+
 }
 
 // Called every frame
@@ -80,9 +87,9 @@ void AMyPawn::Tick(float DeltaTime)
 
 	AddMovementInput(GetActorForwardVector());
 
-	float WorldDeltaSeconds = UGameplayStatics::GetWorldDeltaSeconds(GetWorld());
-	Left->AddLocalRotation(FRotator(0, 0, 1800.0f * WorldDeltaSeconds));
-	Right->AddLocalRotation(FRotator(0, 0, 1800.0f * WorldDeltaSeconds));
+	//float WorldDeltaSeconds = UGameplayStatics::GetWorldDeltaSeconds(GetWorld());
+	//Left->AddLocalRotation(FRotator(0, 0, 1800.0f * WorldDeltaSeconds));
+	//Right->AddLocalRotation(FRotator(0, 0, 1800.0f * WorldDeltaSeconds));
 }
 
 // Called to bind functionality to input
@@ -90,5 +97,36 @@ void AMyPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
+	PlayerInputComponent->BindAction(TEXT("Fire"), IE_Pressed, this, &AMyPawn::Fire);
+//	PlayerInputComponent->BindAction(TEXT("Fire"), IE_Released, this, &AMyPawn::UnFire);
+	PlayerInputComponent->BindAxis(TEXT("Pitch"), this, &AMyPawn::Pitch);
+	PlayerInputComponent->BindAxis(TEXT("Roll"), this, &AMyPawn::Roll);
+
+}
+
+void AMyPawn::Fire()
+{
+	GetWorld()->SpawnActor<AActor>(this->GetClass(), 
+		Arrow->K2_GetComponentLocation(), Arrow->GetComponentRotation());
+}
+
+void AMyPawn::Pitch(float Value)
+{
+	if (Value != 0)
+	{
+		AddActorLocalRotation(FRotator(UGameplayStatics::GetWorldDeltaSeconds(GetWorld()) * 60 * Value,
+			0,
+			0));
+	}
+}
+
+void AMyPawn::Roll(float Value)
+{
+	if (Value != 0)
+	{
+		AddActorLocalRotation(FRotator(0,
+			0,
+			UGameplayStatics::GetWorldDeltaSeconds(GetWorld()) * 60 * Value));
+	}
 }
 
